@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CGWB Data Download</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Flatpickr CSS for calendar -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .flatpickr-calendar {
+            background-color: #ffffff; border-radius: 0.5rem; border: 1px solid #e5e7eb;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .flatpickr-day { color: #374151; }
+        .flatpickr-day:hover { background-color: #eff6ff; }
+        .flatpickr-day.selected { background-color: #3b82f6; border-color: #3b82f6; color: #ffffff; }
+        .flatpickr-weekday, .flatpickr-monthDropdown-month, .numInput { color: #6b7280; }
+        .flatpickr-current-month .flatpickr-monthDropdown-month { color: #111827; font-weight: bold; font-size: 0.95rem;}
+        .numInputWrapper span:hover { background: #dbeafe; }
+        select option { color: black; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-900 to-indigo-900 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-4xl mx-auto">
+        <!-- Main Search Panel Card -->
+        <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 md:p-8 shadow-2xl text-white">
+            <h1 class="text-3xl font-bold mb-6">CGWB Groundwater Data Download Panel</h1>
+
+            <!-- Form starts here -->
+            <form id="search-form" class="space-y-6">
+                <!-- Grid for form fields -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- State -->
+                    <div>
+                        <label for="stateName" class="block text-sm font-medium text-gray-300 mb-1">State</label>
+                        <select id="stateName" name="stateName" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+                            <option value="">Loading States...</option>
+                        </select>
+                    </div>
+
+                    <!-- District -->
+                    <div>
+                        <label for="districtName" class="block text-sm font-medium text-gray-300 mb-1">District</label>
+                        <select id="districtName" name="districtName" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+                             <option value="">Select a State First</option>
+                        </select>
+                    </div>
+
+                    <!-- Start Date -->
+                    <div>
+                        <label for="startdate" class="block text-sm font-medium text-gray-300 mb-1">Start Date</label>
+                        <input type="text" id="startdate" name="startdate" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 transition" placeholder="Select start date...">
+                    </div>
+
+                    <!-- End Date -->
+                    <div>
+                        <label for="enddate" class="block text-sm font-medium text-gray-300 mb-1">End Date</label>
+                        <input type="text" id="enddate" name="enddate" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 transition" placeholder="Select end date...">
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end items-center gap-4 pt-4">
+                    <button type="reset" class="px-6 py-2.5 bg-gray-500/50 hover:bg-gray-500/70 text-white font-semibold rounded-lg transition">Reset</button>
+                    <button type="submit" id="submit-btn" class="px-6 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-blue-900 font-semibold rounded-lg transition shadow-lg">
+                        <span id="btn-text">Get Preview</span>
+                        <span id="btn-loader" class="hidden">
+                            <svg class="animate-spin h-5 w-5 text-blue-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-container" class="mt-8 bg-white/10 backdrop-blur-lg rounded-2xl p-6 md:p-8 shadow-2xl text-white hidden">
+            <div class="flex justify-between items-center mb-4">
+                 <h2 class="text-2xl font-bold">Data Preview (First 100 Rows)</h2>
+                 <button id="download-csv-btn" class="hidden px-5 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition shadow-lg">Download Full CSV</button>
+            </div>
+            <div id="status-message" class="mb-4 p-4 rounded-lg"></div>
+            <div class="overflow-x-auto max-h-96">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b border-white/20">
+                            <!-- NEW: District header, hidden by default -->
+                            <th id="district-header" class="p-3 hidden">District</th>
+                            <th class="p-3">Station Code</th>
+                            <th class="p-3">Data Time</th>
+                            <th class="p-3">Water Level (mbgl)</th>
+                            <th class="p-3">Latitude</th>
+                            <th class="p-3">Longitude</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-table-body">
+                        <!-- Data will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flatpickr JS for calendar -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <!-- JAVASCRIPT SECTION -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const stateSelect = document.getElementById('stateName');
+            const districtSelect = document.getElementById('districtName');
+            const form = document.getElementById('search-form');
+            const submitBtn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnLoader = document.getElementById('btn-loader');
+            const resultsContainer = document.getElementById('results-container');
+            const statusMessage = document.getElementById('status-message');
+            const resultsTableBody = document.getElementById('results-table-body');
+            const downloadCsvBtn = document.getElementById('download-csv-btn');
+            const districtHeader = document.getElementById('district-header'); // NEW
+
+            let fullCsvData = '';
+            let dynamicFilename = 'download.csv';
+
+            const CITIES_API_URL = 'https://raw.githubusercontent.com/sab99r/Indian-States-And-Districts/master/states-and-districts.json';
+            let statesAndDistrictsData = {};
+
+            function cleanName(name) {
+                return name.replace(/\s*\(.*\)\s*/, '').trim();
+            }
+
+            async function loadStates() {
+                try {
+                    const response = await fetch(CITIES_API_URL);
+                    const jsonData = await response.json();
+                    
+                    jsonData.states.forEach(stateObj => {
+                        const cleanedStateName = cleanName(stateObj.state);
+                        const cleanedDistricts = stateObj.districts.map(d => cleanName(d));
+                        statesAndDistrictsData[cleanedStateName] = cleanedDistricts;
+                    });
+
+                    stateSelect.innerHTML = '<option value="">Select State</option>';
+                    
+                    Object.keys(statesAndDistrictsData).sort().forEach(stateName => {
+                        const option = document.createElement('option');
+                        option.value = stateName;
+                        option.textContent = stateName;
+                        stateSelect.appendChild(option);
+                    });
+                    
+                    loadDistricts();
+                } catch (error) {
+                    console.error("Failed to load states data:", error);
+                    stateSelect.innerHTML = '<option value="">Could not load states</option>';
+                }
+            }
+
+            function loadDistricts() {
+                const selectedState = stateSelect.value;
+                districtSelect.innerHTML = '';
+                
+                if (selectedState && statesAndDistrictsData[selectedState]) {
+                    districtSelect.innerHTML = '<option value="">Select District</option>';
+                    
+                    const allDistrictsOption = document.createElement('option');
+                    allDistrictsOption.value = "__ALL__";
+                    allDistrictsOption.textContent = "All Districts";
+                    districtSelect.appendChild(allDistrictsOption);
+
+                    statesAndDistrictsData[selectedState].forEach(districtName => {
+                        const option = document.createElement('option');
+                        option.value = districtName;
+                        option.textContent = districtName;
+                        districtSelect.appendChild(option);
+                    });
+                } else {
+                    districtSelect.innerHTML = '<option value="">Select a State First</option>';
+                }
+            }
+            
+            stateSelect.addEventListener('change', loadDistricts);
+            loadStates();
+            
+            flatpickr("#startdate", { dateFormat: "Y-m-d" });
+            flatpickr("#enddate", { dateFormat: "Y-m-d" });
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                submitBtn.disabled = true;
+                btnText.classList.add('hidden');
+                btnLoader.classList.remove('hidden');
+                resultsContainer.classList.remove('hidden');
+                downloadCsvBtn.classList.add('hidden');
+                resultsTableBody.innerHTML = '';
+                statusMessage.textContent = 'Fetching data from the server... This may take a moment.';
+                statusMessage.className = 'mb-4 p-4 bg-blue-500/30 rounded-lg';
+
+                const formData = new FormData(form);
+                const selectedDistrict = formData.get('districtName');
+                const isAllDistricts = selectedDistrict === '__ALL__';
+
+                // --- NEW: Show/hide district header based on selection ---
+                if (isAllDistricts) {
+                    districtHeader.classList.remove('hidden');
+                } else {
+                    districtHeader.classList.add('hidden');
+                }
+                
+                if (isAllDistricts) {
+                    const selectedState = formData.get('stateName');
+                    if (selectedState && statesAndDistrictsData[selectedState]) {
+                        const allDistrictsString = statesAndDistrictsData[selectedState].join(',');
+                        formData.set('districtName', allDistrictsString);
+                    }
+                }
+
+                formData.append('dataCategory', 'admin');
+                formData.append('dataset', 'Ground%20Water%20Level');
+                formData.append('agencyName', 'cgwb');
+                
+                const API_ENDPOINT = 'http://127.0.0.1:5000/download-data';
+
+                fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    body: new URLSearchParams(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(err.message || 'Server responded with an error') });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    statusMessage.textContent = `Successfully fetched ${data.totalRecords} records. Showing preview of the first 100.`;
+                    statusMessage.className = 'mb-4 p-4 bg-green-500/30 rounded-lg';
+
+                    if (data.preview && data.preview.length > 0) {
+                        data.preview.forEach(row => {
+                            const tr = document.createElement('tr');
+                            tr.className = 'border-b border-white/10 hover:bg-white/10';
+                            
+                            // --- NEW: Conditionally build the table row ---
+                            let rowHtml = '';
+                            if (isAllDistricts) {
+                                rowHtml += `<td class="p-3">${row.district || 'N/A'}</td>`;
+                            }
+                            rowHtml += `
+                                <td class="p-3">${row.stationCode || 'N/A'}</td>
+                                <td class="p-3">${row.dataTime || 'N/A'}</td>
+                                <td class="p-3">${row.dataValue || 'N/A'}</td>
+                                <td class="p-3">${row.latitude || 'N/A'}</td>
+                                <td class="p-3">${row.longitude || 'N/A'}</td>
+                            `;
+                            tr.innerHTML = rowHtml;
+                            resultsTableBody.appendChild(tr);
+                        });
+                        
+                        fullCsvData = data.csvData;
+                        const state = formData.get('stateName').replace(/\s/g, '_');
+                        const district = isAllDistricts ? 'All_Districts' : formData.get('districtName').replace(/\s/g, '_');
+                        const start = formData.get('startdate');
+                        const end = formData.get('enddate');
+                        dynamicFilename = `${state}_${district}_gwdata_${start}_to_${end}.csv`;
+                        
+                        downloadCsvBtn.classList.remove('hidden');
+                    } else {
+                        resultsTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-4">No data found for the selected criteria.</td></tr>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    statusMessage.textContent = `Error: ${error.message}`;
+                    statusMessage.className = 'mb-4 p-4 bg-red-500/30 rounded-lg';
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    btnText.classList.remove('hidden');
+                    btnLoader.classList.add('hidden');
+                });
+            });
+            
+            downloadCsvBtn.addEventListener('click', () => {
+                if (!fullCsvData) {
+                    alert("No data available to download.");
+                    return;
+                }
+                const blob = new Blob([fullCsvData], { type: 'text/csv;charset=utf-8;' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = dynamicFilename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            });
+
+            form.addEventListener('reset', () => {
+                resultsContainer.classList.add('hidden');
+            });
+        });
+    </script>
+</body>
+</html>

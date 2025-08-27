@@ -1,5 +1,3 @@
-# This code replaces the old function in your 'your_data_downloader.py' file
-
 import requests
 import pandas as pd
 import json
@@ -26,8 +24,6 @@ def download_paginated_data_post(base_url, initial_params):
             response.raise_for_status()
             
             response_json = response.json()
-            
-            # --- THIS IS THE NEW, SMARTER LOGIC ---
             data_list = None
             if isinstance(response_json, list):
                 # Case 1: The server sent a plain list of records.
@@ -99,4 +95,5 @@ def convert_to_iso(value):
         )
         return iso_string
     except (ValueError, SyntaxError, KeyError):
+
         return None

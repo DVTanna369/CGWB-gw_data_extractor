@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 import io
 import numpy as np
 
-# This imports the functions from 'your_data_downloader.py' file
+# This imports the functions from your 'your_data_downloader.py' file
 from your_data_downloader import download_paginated_data_post, convert_to_iso
 
 app = Flask(__name__)
@@ -59,11 +59,16 @@ def download_data_endpoint():
             current_params = base_params.copy()
             current_params['districtName'] = district
             
-            # Handle the special API rule for multi-word districts
             state_name = current_params['stateName']
-            if district.lower().endswith(state_name.lower()):
+            # First, handle the special API rule ONLY for the state of Delhi
+            if state_name == 'Delhi' and district.lower().endswith(state_name.lower()):
                 cleaned_district = district.lower().replace(state_name.lower(), '').strip()
-                current_params['districtName'] = cleaned_district.title()
+                # Use .capitalize() for Sentence case
+                current_params['districtName'] = cleaned_district.capitalize()
+            # For other cases, if the district name has multiple words, convert to Sentence case
+            elif ' ' in district:
+                # Use .capitalize() for Sentence case
+                current_params['districtName'] = district.capitalize()
             
             print(f"Request parameters sent to downloader: {current_params}")
             
@@ -106,7 +111,7 @@ def download_data_endpoint():
         # Prepare the 100-line preview
         preview_df = df_for_json.head(100).copy()
 
-        # --- NEW: Reorder columns for the preview if "All Districts" is selected ---
+        # Reorder columns for the preview if "All Districts" is selected
         if is_all_districts and 'district' in preview_df.columns:
             cols = preview_df.columns.tolist()
             # Move the 'district' column to the front of the list
@@ -115,7 +120,6 @@ def download_data_endpoint():
             preview_df = preview_df[cols]
         
         preview_data = preview_df.to_dict(orient='records')
-
 
         # Prepare the full data as a CSV string (using the original sorted DataFrame)
         output = io.StringIO()

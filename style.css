@@ -57,3 +57,7 @@ select option {
 .flatpickr-monthDropdown-month { 
     font-size: 0.85rem; 
 }
+
+input[type="radio"] + span {
+    color: white;
+}

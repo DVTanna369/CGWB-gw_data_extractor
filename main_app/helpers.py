@@ -25,7 +25,6 @@ def download_paginated_data_post(base_url, url_params, body_params):
             current_body_params['page'] = current_page
             print(f"Fetching data from page {current_page}...")
             
-            # Use both `params` (for URL) and `data` (for body)
             response = requests.post(
                 base_url, 
                 params=url_params, 
@@ -64,3 +63,74 @@ def convert_to_iso(value):
                 f"{time_dict['hour']:02d}:{time_dict['minute']:02d}:{time_dict['second']:02d}")
     except (ValueError, SyntaxError, KeyError, TypeError):
         return None
+
+def pivot_data(df, data_category):
+    """
+    Transforms raw data into a wide-format pivoted table, ensuring all stations
+    from the original file are preserved in the final output.
+    """
+    print(f"--- Pivoting data for '{data_category}' category ---")
+    try:
+        # Step 1: Standardize Column Names and Clean Station Codes
+        df.columns = [col.lower() for col in df.columns]
+        if 'stationcode' not in df.columns:
+            print("Warning: 'stationcode' column not found.")
+            return df
+        
+        df.dropna(subset=['stationcode'], inplace=True)
+        df['stationcode'] = df['stationcode'].astype(str).str.strip()
+
+        # Step 2: Create a Canonical Master List of ALL Stations
+        print("\n--- Creating master list of all unique stations ---")
+        
+        # ✅ FIX: Define aggregation rules based on the selected data category
+        possible_agg_rules = {
+            'stationname': 'first',
+            'unit': 'first',
+            'latitude': 'mean',
+            'longitude': 'mean',
+            'welldepth': 'mean'
+        }
+        
+        if data_category == 'admin':
+            possible_agg_rules.update({'district': 'first', 'tehsil': 'first'})
+        elif data_category == 'basin':
+            possible_agg_rules.update({'basin': 'first', 'tributary': 'first'})
+
+        # Filter rules to only include columns that actually exist in the dataframe
+        agg_rules = {col: rule for col, rule in possible_agg_rules.items() if col in df.columns}
+        
+        station_info_df = df.groupby('stationcode').agg(agg_rules).reset_index()
+
+        # Step 3: Prepare the Data for Pivoting
+        df_for_pivot = df.copy()
+        df_for_pivot.dropna(subset=['datavalue'], inplace=True)
+        
+        df_for_pivot['datatime'] = df_for_pivot['datatime'].apply(convert_to_iso)
+        df_for_pivot['datatime'] = pd.to_datetime(df_for_pivot['datatime'])
+        df_for_pivot['year'] = df_for_pivot['datatime'].dt.year
+
+        # Step 4: Pivot ONLY the Data with Valid Values
+        print("\n--- Pivoting yearly data values ---")
+        pivoted_values_df = df_for_pivot.pivot_table(
+            index='stationcode',
+            columns='year',
+            values='datavalue',
+            aggfunc='mean'
+        ).reset_index()
+        pivoted_values_df.columns.name = None
+        
+        # Step 5: Merge the Master Station List with the Pivoted Data
+        print("\n--- Merging station information with pivoted data ---")
+        final_df = pd.merge(station_info_df, pivoted_values_df, on='stationcode', how='left')
+        
+        # Final cleanup for a clean CSV export
+        obj_cols = final_df.select_dtypes(include=['object']).columns
+        final_df[obj_cols] = final_df[obj_cols].fillna('')
+
+        return final_df
+
+    except Exception as e:
+        print(f"An error occurred during pivoting: {e}")
+        return df
+

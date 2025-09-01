@@ -20,56 +20,67 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                         <label for="datasetName" class="block text-sm font-medium">Dataset</label>
-                        <select id="datasetName" name="datasetName" class="w-full bg-white/10 border rounded-lg px-4 py-2.5 mt-1"></select>
+                        <select id="datasetName" name="datasetName" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 mt-1"></select>
                     </div>
                     <div>
                         <label for="dataCategory" class="block text-sm font-medium">Data Category</label>
-                        <select id="dataCategory" name="dataCategory" class="w-full bg-white/10 border rounded-lg px-4 py-2.5 mt-1" disabled></select>
+                        <select id="dataCategory" name="dataCategory" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 mt-1" disabled></select>
                     </div>
                 </div>
 
                 <!-- Row 2: Admin or Basin View -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <!-- Admin View (State & District) -->
                     <div id="admin-view" class="contents">
                         <div>
                             <label for="stateName" class="block text-sm font-medium">State</label>
-                            <select id="stateName" name="stateName" class="w-full bg-white/10 border rounded-lg px-4 py-2.5 mt-1" disabled></select>
+                            <select id="stateName" name="stateName" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 mt-1" disabled></select>
                         </div>
                         <div>
                             <label for="districtName" class="block text-sm font-medium">District</label>
-                            <select id="districtName" name="districtName" class="w-full bg-white/10 border rounded-lg px-4 py-2.5 mt-1" disabled></select>
+                            <select id="districtName" name="districtName" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 mt-1" disabled></select>
                         </div>
                     </div>
-                    <!-- Basin View (River & Tributary) -->
                     <div id="basin-view" class="contents hidden">
                          <div>
                             <label for="riverName" class="block text-sm font-medium">River</label>
-                            <select id="riverName" name="riverName" class="w-full bg-white/10 border rounded-lg px-4 py-2.5 mt-1" disabled></select>
+                            <select id="riverName" name="riverName" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 mt-1" disabled></select>
                         </div>
                         <div>
                             <label for="tributaryName" class="block text-sm font-medium">Tributary</label>
-                            <select id="tributaryName" name="tributaryName" class="w-full bg-white/10 border rounded-lg px-4 py-2.5 mt-1" disabled></select>
+                            <select id="tributaryName" name="tributaryName" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 mt-1" disabled></select>
                         </div>
                     </div>
                 </div>
 
-                <!-- Row 3: Start & End Date -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div>
+                <!-- Row 3: Dates & Agency -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div class="sm:col-span-1">
                          <label for="startdate" class="block text-sm font-medium">Start Date</label>
-                         <input type="text" id="startdate" name="startdate" class="w-full bg-white/10 border rounded-lg px-4 py-2.5 mt-1" placeholder="Select start date...">
+                         <input type="text" id="startdate" name="startdate" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 mt-1" placeholder="Select start date...">
                     </div>
-                     <div>
+                     <div class="sm:col-span-1">
                          <label for="enddate" class="block text-sm font-medium">End Date</label>
-                         <input type="text" id="enddate" name="enddate" class="w-full bg-white/10 border rounded-lg px-4 py-2.5 mt-1" placeholder="Select end date...">
+                         <input type="text" id="enddate" name="enddate" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 mt-1" placeholder="Select end date...">
+                    </div>
+                    <div class="sm:col-span-1">
+                        <label for="agencyName" class="block text-sm font-medium">Agency</label>
+                        <select id="agencyName" name="agencyName" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 mt-1" disabled></select>
                     </div>
                 </div>
                 
-                <!-- Row 4: Agency -->
-                <div>
-                    <label for="agencyName" class="block text-sm font-medium">Agency</label>
-                    <select id="agencyName" name="agencyName" class="w-full bg-white/10 border rounded-lg px-4 py-2.5 mt-1" disabled></select>
+                <!-- Row 4: Download Format -->
+                <div class="pt-2">
+                    <label class="block text-sm font-medium mb-2">Download Format</label>
+                    <div class="flex items-center space-x-6">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="downloadFormat" value="arranged" class="h-4 w-4 text-yellow-500 bg-gray-700 border-gray-600 focus:ring-yellow-600" checked>
+                            <span class="ml-2">Arranged (Default)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="downloadFormat" value="pivoted" class="h-4 w-4 text-yellow-500 bg-gray-700 border-gray-600 focus:ring-yellow-600">
+                            <span class="ml-2">Pivoted (Yearly Columns)</span>
+                        </label>
+                    </div>
                 </div>
                 
                 <!-- Row 5: Buttons -->
@@ -102,7 +113,7 @@
                             <th id="district-header" class="p-3 hidden">District</th>
                             <th class="p-3">Station Code</th>
                             <th class="p-3">Data Time</th>
-                            <th class="p-3">Water Level (mbgl)</th>
+                            <th class="p-3">Data Value</th>
                             <th class="p-3">Latitude</th>
                             <th class="p-3">Longitude</th>
                         </tr>
@@ -117,3 +128,4 @@
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
+

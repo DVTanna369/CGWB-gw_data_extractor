@@ -6,7 +6,7 @@ import numpy as np
 from flask import Blueprint, request, jsonify
 from urllib.parse import quote
 from .api_client import api_session, initialize_session
-from .helpers import download_paginated_data_post, convert_to_iso
+from .helpers import download_paginated_data_post, convert_to_iso, pivot_data
 
 bp = Blueprint('main', __name__)
 
@@ -109,6 +109,7 @@ def download_data_endpoint():
         data_category = params.get('dataCategory')
         dataset_name = params.get('datasetName')
         agency_name = params.get('agencyName')
+        download_format = params.get('downloadFormat', 'arranged')
         
         if not all([data_category, dataset_name, agency_name]):
             return jsonify({"message": "Dataset, Category, and Agency are required"}), 400
@@ -125,8 +126,17 @@ def download_data_endpoint():
         filename = "download.csv"
         safe_dataset_name = dataset_name.replace(" ", "_").replace("/", "_")
         
-        if data_category == 'admin':
+        # ✅ FIX: Determine the special URL part first, so it applies to both categories.
+        if dataset_name == "River Water Level":
+            dataset_url_part = "River%20WaterLevel"
+        elif dataset_name == "Snowfall":
+            dataset_url_part = "SnowFall"
+        elif dataset_name == "Rainfall":
+            dataset_url_part = "RainFall"
+        else:
             dataset_url_part = quote(dataset_name)
+
+        if data_category == 'admin':
             base_url = f"https://indiawris.gov.in/Dataset/{dataset_url_part}"
             url_params['stateName'] = params.get('stateName')
             child_names_str = params.get('districtName', '')
@@ -135,7 +145,6 @@ def download_data_endpoint():
             district_name = "All_Districts" if ',' in child_names_str else child_names_str.replace(" ", "_")
             filename = f"{safe_dataset_name}_admin_data_{district_name}.csv"
         elif data_category == 'basin':
-            dataset_url_part = "River%20WaterLevel" if dataset_name == "River Water Level" else quote(dataset_name)
             base_url = f"https://indiawris.gov.in/Dataset/Basin/{dataset_url_part}"
             url_params['basinName'] = params.get('riverName')
             child_names_str = params.get('tributaryName', '')
@@ -167,25 +176,32 @@ def download_data_endpoint():
 
         final_df = pd.concat(all_child_dfs, ignore_index=True)
         
-        df_sorted = final_df
-        valid_sort_keys = [key for key in sort_keys if key in final_df.columns]
-        if valid_sort_keys:
-            df_sorted = final_df.sort_values(by=valid_sort_keys, na_position='last')
+        df_for_export = final_df
         
-        if 'dataTime' in df_sorted.columns:
-            df_sorted['dataTime'] = pd.to_datetime(df_sorted['dataTime'].apply(convert_to_iso), errors='coerce').dt.strftime('%Y-%m-%d %H:%M:%S')
+        if download_format == 'pivoted':
+            df_for_export = pivot_data(final_df, data_category)
+            filename = filename.replace('.csv', '_pivoted.csv')
+        else:
+            valid_sort_keys = [key for key in sort_keys if key in final_df.columns]
+            if valid_sort_keys:
+                df_for_export = final_df.sort_values(by=valid_sort_keys, na_position='last')
         
-        df_for_json = df_sorted.replace({np.nan: None})
-        preview_data = df_for_json.head(100).to_dict(orient='records')
+        if 'datatime' in df_for_export.columns:
+            df_for_export['datatime'] = pd.to_datetime(df_for_export['datatime'], errors='coerce').dt.strftime('%Y-%m-%d %H:%M:%S')
+
+        df_for_preview = final_df.replace({np.nan: None})
+        preview_data = df_for_preview.head(100).to_dict(orient='records')
+        
         output = io.StringIO()
-        df_sorted.to_csv(output, index=False)
+        df_for_export.to_csv(output, index=False)
         csv_output = output.getvalue()
         
         return jsonify({
             "preview": preview_data,
             "csvData": csv_output,
-            "totalRecords": len(df_sorted),
+            "totalRecords": len(final_df),
             "filename": filename
         })
     except Exception as e:
         return jsonify({"message": f"An internal server error occurred: {e}"}), 500
+

@@ -172,6 +172,11 @@ export function getFormData() {
     formData.append('startdate', document.getElementById('startdate').value);
     formData.append('enddate', document.getElementById('enddate').value);
     formData.append('agencyName', elements.agencySelect.value);
+    
+    // ✅ NEW: Read the selected download format from the radio buttons
+    const downloadFormat = document.querySelector('input[name="downloadFormat"]:checked').value;
+    formData.append('downloadFormat', downloadFormat);
+
     const category = elements.categorySelect.value;
     const selectedDatasetOption = elements.datasetSelect.options[elements.datasetSelect.selectedIndex];
     formData.append('dataCategory', category);

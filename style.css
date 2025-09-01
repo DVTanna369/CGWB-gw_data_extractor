@@ -1,0 +1,59 @@
+body { 
+    font-family: 'Inter', sans-serif; 
+}
+
+select { 
+    color: white; 
+}
+
+select:disabled { 
+    background-color: rgba(255, 255, 255, 0.05); 
+    cursor: not-allowed; 
+}
+
+select option { 
+    color: black; 
+}
+
+/* ✅ FIX: Ensures the date picker appears on top of other elements. */
+.flatpickr-calendar {
+    z-index: 1000;
+    background-color: #ffffff; 
+    border-radius: 0.5rem; 
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.flatpickr-day { 
+    color: #374151; 
+}
+
+.flatpickr-day:hover { 
+    background-color: #eff6ff; 
+}
+
+.flatpickr-day.selected { 
+    background-color: #3b82f6; 
+    border-color: #3b82f6; 
+    color: #ffffff; 
+}
+
+.flatpickr-weekday, 
+.flatpickr-monthDropdown-month, 
+.numInput { 
+    color: #6b7280; 
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-month { 
+    color: #111827; 
+    font-weight: bold; 
+    font-size: 0.95rem;
+}
+
+.numInputWrapper span:hover { 
+    background: #dbeafe; 
+}
+
+.flatpickr-monthDropdown-month { 
+    font-size: 0.85rem; 
+}
